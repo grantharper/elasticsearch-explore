@@ -15,40 +15,27 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ShakespeareSearch {
 
 	private static final Logger logger = LogManager.getLogger(ShakespeareSearch.class);
 
 	private static final String INDEX = "shakespeare";
 
-	RestHighLevelClient client;
+	private RestHighLevelClient client;
 
-	private void openTransportClient() {
-		logger.info("Opening rest client");
-
-		client = new RestHighLevelClient(
-				RestClient.builder(new HttpHost("localhost", 9200, "http"), new HttpHost("localhost", 9201, "http")));
-		System.out.println("Opened rest client");
+	@Autowired
+	public ShakespeareSearch(RestHighLevelClient client)
+	{
+		this.client = client;
 	}
 
 	public void search() {
-		try {
-
-			openTransportClient();
 			performOverallSearch();
 			performSpecificSearch();
-
-		} finally {
-			if (client != null) {
-				logger.info("Closing rest client");
-				try {
-					client.close();
-				} catch (IOException e) {
-					logger.error("Error closing rest client", e);
-				}
-			}
-		}
 	}
 	
 	SearchResponse performSearch(SearchRequest searchRequest) {
@@ -77,7 +64,8 @@ public class ShakespeareSearch {
 		
 		SearchRequest searchRequest = new SearchRequest(INDEX);
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-		searchSourceBuilder.query(QueryBuilders.boolQuery().must(QueryBuilders.termQuery("play_name", "Hamlet"))
+		searchSourceBuilder.query(QueryBuilders.boolQuery().must(
+						QueryBuilders.termQuery("play_name", "Hamlet"))
 						.must(QueryBuilders.termQuery("speaker", "HAMLET")));
 		SearchResponse searchResponse = performSearch(searchRequest);
 		SearchHits hits = searchResponse.getHits();
